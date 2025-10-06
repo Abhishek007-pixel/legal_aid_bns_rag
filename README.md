@@ -112,7 +112,7 @@ yaml
 
 
 
-\*(Place your images in `assets/` folder and replace names accordingly.)\*
+
 
 
 
@@ -126,7 +126,7 @@ yaml
 
 🎬 \*\*\[Click to Watch Demo](https://youtu.be/m9klEMLh5MU)\*\*  
 
-\*(Replace the above link once you upload your project walkthrough.)\*
+
 
 
 
@@ -142,7 +142,7 @@ yaml
 
 ```bash
 
-git clone https://github.com/<your-username>/legal\_aid.git
+git clone https://github.com/Abhishek007-pixel/legal_aid_bns_rag.git
 
 cd legal\_aid
 
@@ -213,14 +213,13 @@ streamlit run ui/app.py
 🔹 Deployment on Hugging Face / Streamlit Cloud
 
 
+Author
+# Abhishek Kumar
 
-👨‍💻 Author
+📍 India  
 
-Ankur Gupta
+🔗 [GitHub](https://github.com/Abhishek007-pixel) | [LinkedIn](https://www.linkedin.com/in/workwithabhi007/)
 
-📍 India
-
-🔗 GitHub | LinkedIn
 
 
 
