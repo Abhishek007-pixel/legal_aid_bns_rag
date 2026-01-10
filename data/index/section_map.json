@@ -1,12 +1,52 @@
 {
+  "103": {
+    "idx": 45,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "103. Punishment for murder. (1) Whoever commits murder shall be punished with death or imprisonment for life, and shall also be liable to fine."
+  },
+  "109": {
+    "idx": 48,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "109. Attempt to commit murder. Whoever does any act with such intention or knowledge, and under such circumstances that, if he by that act caused death, he would be guilty of murder."
+  },
+  "303": {
+    "idx": 112,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "303. Theft. (1) Whoever, intending to take dishonestly any movable property out of the possession of any person without that person's consent, moves that property in order to such taking, is said to commit theft."
+  },
   "308": {
     "idx": 16,
     "source": "data\\raw\\BNS_Part1.pdf",
-    "snippet": "308. Attempt to commit culpable homicide. 111. Organised crime New Section 112. Petty organised crime. New Section 113. Terrorist act. New Section Of hurt Of Hu"
+    "snippet": "308. Robbery. In all robbery there is either theft or extortion. Theft is 'robbery' if, in order to the committing of the theft, or in committing the theft, or in carrying away or attempting to carry away property obtained by the theft."
+  },
+  "316": {
+    "idx": 130,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "316. Criminal breach of trust. Whoever, being in any manner entrusted with property, or with any dominion over property, dishonestly misappropriates or converts to his own use that property."
+  },
+  "318": {
+    "idx": 135,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "318. Cheating. Whoever, by deceiving any person, fraudulently or dishonestly induces the person so deceived to deliver any property to any person, or to consent that any person shall retain any property."
+  },
+  "69": {
+    "idx": 22,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "69. Sexual intercourse by employing deceitful means, etc. Whoever, by deceitful means or making by promise to marry to a woman without any intention of fulfilling the same, and has sexual intercourse with her."
   },
   "84": {
     "idx": 72,
     "source": "data\\raw\\BNS_Part1.pdf",
-    "snippet": "84. Whoever takes or entices away any woman who is and whom he knows or has reason to believe to be the wife of any other man, with intent that she may have ill"
+    "snippet": "84. Enticing or taking away or detaining with criminal intent a married woman. Whoever takes or entices away any woman who is and whom he knows or has reason to believe to be the wife of any other man."
+  },
+  "111": {
+    "idx": 17,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "111. Organised crime. (1) Any continuing unlawful activity including kidnapping, robbery, vehicle theft, extortion, land grabbing, contract killing, economic offences."
+  },
+  "113": {
+    "idx": 19,
+    "source": "data\\raw\\BNS_Part1.pdf",
+    "snippet": "113. Terrorist act. Whoever does any act with intent to threaten or likely to threaten the unity, integrity, sovereignty, security, or economic security of India or with intent to strike terror."
   }
 }

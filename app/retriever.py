@@ -224,3 +224,21 @@ def retrieve(query: str) -> List[Dict]:
     results.sort(key=lambda r: r["score"], reverse=True)
     results = [r for r in results if r["score"] >= settings.MIN_SIM_SCORE]
     return results[: settings.TOP_K]
+
+
+# FAISS FOR RETRIEVER.PY
+
+#import faiss
+#import numpy as np
+# 1. Load the Index
+#index = faiss.read_index("data/index/faiss.index")
+
+#def search_vectors(query: str):
+    # 2. Embed the query (using the same model as ingest!)
+ #   query_vec = _embed_single_text(query) 
+    
+    # 3. Search
+    # D = Distances (Scores), I = Indices (Which docs?)
+  #  D, I = index.search(query_vec, k=5)
+    
+   # return I[0], D[0] # Return the top chunk IDs and their scores
