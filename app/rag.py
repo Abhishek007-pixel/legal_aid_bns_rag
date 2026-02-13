@@ -2,14 +2,14 @@ from __future__ import annotations
 from typing import Dict, List
 from pathlib import Path
 import traceback
-from openai import OpenAI
+from huggingface_hub import InferenceClient
 
-# IMPORTS CHANGED HERE:
 from app.hybrid_retriever import hybrid_retriever 
 from app.prompts import SYSTEM_PROMPT, USER_PROMPT
 from app.settings import settings
 
-# ... [Keep your OpenRouter Client setup here] ...
+# Hugging Face Inference Client
+_hf_client = InferenceClient(token=settings.HF_TOKEN)
 
 def _build_context(docs: List[Dict]) -> tuple[str, List[Dict]]:
     lines, cites = [], []
@@ -24,7 +24,7 @@ def _build_context(docs: List[Dict]) -> tuple[str, List[Dict]]:
     return "\n\n".join(lines), cites
 
 def answer(question: str, filter_filename: str = None) -> Dict:
-    # UPDATED: Call the hybrid retriever with the filter
+    # Call the hybrid retriever with the filter
     docs = hybrid_retriever.search(question, filename=filter_filename, top_k=settings.TOP_K)
     
     if not docs:
@@ -34,21 +34,20 @@ def answer(question: str, filter_filename: str = None) -> Dict:
         }
 
     context, cites = _build_context(docs)
-    user = USER_PROMPT.format(jurisdiction=settings.JURISDICTION, question=question, context=context)
+    user_prompt = USER_PROMPT.format(jurisdiction=settings.JURISDICTION, question=question, context=context)
+    
+    # Combine system and user prompts for Hugging Face
+    full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {user_prompt}\n\nAssistant:"
 
     try:
-        # ... [Keep your existing LLM call logic here] ...
-        # (Copy pasting your existing OpenRouter call for brevity)
-        resp = _or_client.chat.completions.create(
-            model=settings.OR_MODEL,
-            # ... existing params ...
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user},
-            ],
+        # Call Hugging Face Inference API
+        response = _hf_client.text_generation(
+            prompt=full_prompt,
+            model=settings.HF_MODEL,
+            max_new_tokens=1000,
+            temperature=0.7,
         )
-        content = resp.choices[0].message.content
-        return {"answer": content, "citations": cites}
+        return {"answer": response, "citations": cites}
 
     except Exception as e:
         print("[rag.answer] Error:", e)

@@ -1,0 +1,79 @@
+﻿.\venv\Scripts\python.exe : Traceback (most recent call 
+last):
+At line:1 char:1
++ .\venv\Scripts\python.exe test_full_answer.py 2>&1 | 
+Out-File -FilePa ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (mo 
+   st recent call last)::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\hp\legal_aid\app\rag.py", line 44, in 
+answer
+    resp = _or_client.chat.completions.create(
+        model=settings.OR_MODEL,
+    ...<3 lines>...
+        ],
+    )
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\openai
+\_utils\_utils.py", line 286, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\openai
+\resources\chat\completions\completions.py", line 1192, in 
+create
+    return self._post(
+           ~~~~~~~~~~^
+        "/chat/completions",
+        ^^^^^^^^^^^^^^^^^^^^
+    ...<47 lines>...
+        stream_cls=Stream[ChatCompletionChunk],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\openai
+\_base_client.py", line 1259, in post
+    return cast(ResponseT, self.request(cast_to, opts, 
+stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\openai
+\_base_client.py", line 1047, in request
+    raise 
+self._make_status_error_from_response(err.response) from 
+None
+openai.APIStatusError: Error code: 402 - {'error': 
+{'message': 'Provider returned error', 'code': 402, 
+'metadata': {'raw': '{"error":"API key USD spend limit 
+exceeded. Your account may still have USD balance, but 
+this API key has reached its configured USD spending 
+limit."}', 'provider_name': 'Venice', 'is_byok': False}}, 
+'user_id': 'user_2zgijgL81UZNUahoGFslGGmwxSq'}
+================================================================================
+ LEGAL AID RAG SYSTEM - FULL TEST WITH GEMINI
+================================================================================
+[init] Loading Hybrid Retriever components...
+[init] Building BM25 index...
+[init] Loading FAISS index...
+[init] Loading Cross-Encoder model...
+
+QUESTION: What is the punishment for theft under BNS?
+================================================================================
+
+[Processing...]
+  1. Retrieving relevant sections from BNS...
+  2. Ranking with hybrid search (FAISS + BM25)...
+  3. Reranking with cross-encoder...
+  4. Generating answer with Gemini Flash 1.5...
+[rag.answer] Error: Error code: 402 - {'error': {'message': 'Provider returned error', 'code': 402, 'metadata': {'raw': '{"error":"API key USD spend limit exceeded. Your account may still have USD balance, but this API key has reached its configured USD spending limit."}', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2zgijgL81UZNUahoGFslGGmwxSq'}
+
+================================================================================
+ GEMINI ANSWER
+================================================================================
+Error generating response.
+
+================================================================================
+ CITATIONS (0 sources)
+================================================================================
+================================================================================
+ TEST COMPLETE
+================================================================================

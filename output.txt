@@ -1,0 +1,107 @@
+﻿.\venv\Scripts\python.exe : 
+C:\Users\hp\legal_aid\app\rag.py:5: FutureWarning: 
+At line:1 char:1
++ .\venv\Scripts\python.exe test_full_answer.py 2>&1 | 
+Out-File -FilePa ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\hp\l 
+   eg...FutureWarning: :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+All support for the `google.generativeai` package has 
+ended. It will no longer be receiving 
+updates or bug fixes. Please switch to the `google.genai` 
+package as soon as possible.
+See README for more details:
+
+https://github.com/google-gemini/deprecated-generative-ai-p
+ython/blob/main/README.md
+
+  import google.generativeai as genai
+Traceback (most recent call last):
+  File "C:\Users\hp\legal_aid\app\rag.py", line 45, in 
+answer
+    response = _gemini_model.generate_content(full_prompt)
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\generativeai\generative_models.py", line 331, in 
+generate_content
+    response = self._client.generate_content(
+        request,
+        **request_options,
+    )
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\ai\generativelanguage_v1beta\services\generative_service\c
+lient.py", line 835, in generate_content
+    response = rpc(
+        request,
+    ...<2 lines>...
+        metadata=metadata,
+    )
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\gapic_v1\method.py", line 131, in __call__
+    return wrapped_func(*args, **kwargs)
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\retry\retry_unary.py", line 294, in 
+retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\retry\retry_base.py", line 214, in 
+_retry_error_helper
+    raise final_exc from source_exc
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\timeout.py", line 130, in func_with_timeout
+    return func(*args, **kwargs)
+  File "C:\Users\hp\legal_aid\venv\Lib\site-packages\google
+\api_core\grpc_helpers.py", line 77, in 
+error_remapped_callable
+    raise exceptions.from_grpc_error(exc) from exc
+google.api_core.exceptions.ResourceExhausted: 429 You 
+exceeded your current quota, please check your plan and 
+billing details. For more information on this error, head 
+to: https://ai.google.dev/gemini-api/docs/rate-limits. To 
+monitor your current usage, head to: 
+https://ai.dev/rate-limit. 
+================================================================================
+ LEGAL AID RAG SYSTEM - FULL TEST WITH GEMINI
+================================================================================
+[init] Loading Hybrid Retriever components...
+[init] Building BM25 index...
+[init] Loading FAISS index...
+[init] Loading Cross-Encoder model...
+
+QUESTION: What is the punishment for theft under BNS?
+================================================================================
+
+[Processing...]
+  1. Retrieving relevant sections from BNS...
+  2. Ranking with hybrid search (FAISS + BM25)...
+  3. Reranking with cross-encoder...
+  4. Generating answer with Gemini Flash 1.5...
+[rag.answer] Error: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+
+================================================================================
+ GEMINI ANSWER
+================================================================================
+Error generating response.
+
+================================================================================
+ CITATIONS (0 sources)
+================================================================================
+================================================================================
+ TEST COMPLETE
+================================================================================

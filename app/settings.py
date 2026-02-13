@@ -1,10 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    # --- OpenRouter (LLM) ---
+    # --- Hugging Face (for LLM) ---
+    HF_TOKEN: str
+    HF_MODEL: str = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    
+    # --- OpenRouter (for embeddings only) ---
     OPENROUTER_API_KEY: str
     OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OR_MODEL: str = "alibaba/tongyi-deepresearch-30b-a3b:free"
     OR_SITE_URL: str | None = None
     OR_SITE_NAME: str | None = None
 

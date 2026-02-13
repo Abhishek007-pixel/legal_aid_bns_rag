@@ -68,7 +68,11 @@ def _embed_texts_openrouter(client: OpenAI, texts: List[str]):
         print(f"  • embedded {min(i + len(batch), total)}/{total}")
 
     X = np.array(embs, dtype="float32")
-    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    # Normalize with safety check to avoid division by zero
+    norms = np.linalg.norm(X, axis=1, keepdims=True)
+    # Replace zero norms with 1.0 to avoid NaN (shouldn't happen with embeddings, but safety first)
+    norms = np.where(norms == 0, 1.0, norms)
+    X = X / norms
     return X
 
 

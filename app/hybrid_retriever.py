@@ -68,8 +68,11 @@ class HybridRetriever:
             # Normalize (L2) - crucial for Cosine Similarity in FAISS
             vec = np.array(emb, dtype="float32")
             norm = np.linalg.norm(vec)
+            # Safety check: avoid division by zero (shouldn't happen with real embeddings)
             if norm > 0:
                 vec = vec / norm
+            else:
+                print("[warning] Query embedding has zero norm, using unnormalized vector")
             return vec.reshape(1, -1)
         except Exception as e:
             print(f"[error] Embedding failed: {e}")
