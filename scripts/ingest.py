@@ -15,7 +15,7 @@ from openai import OpenAI, AuthenticationError, BadRequestError
 
 from app.chunking import parse_pdf, parse_html, chunk_section
 from app.settings import settings
-
+print(f"DEBUG CHECK: settings.USE_EMBEDDINGS is set to: {settings.USE_EMBEDDINGS}")
 RAW = Path("data/raw")
 PROC = Path("data/processed")
 INDEX = Path("data/index")
@@ -73,36 +73,66 @@ def _embed_texts_openrouter(client: OpenAI, texts: List[str]):
 
 
 # ---- section heading detection (used to build section_map) ----
+# --- ---
+
+# ---- UPDATED: Robust section heading detection ----
 import re
+
+# We use a list of patterns ordered by reliability.
+# 1. Explicit "Section 123" (High confidence, search anywhere)
+# 2. "123. Title" (Medium confidence, requires start of line or sentence)
 _SEC_RXES = [
-    re.compile(r"(?mi)^\s*section\s+(?P<num>\d+[A-Za-z]?)\b"),
-    re.compile(r"(?mi)^\s*sec\.?\s*(?P<num>\d+[A-Za-z]?)\b"),
-    re.compile(r"(?mi)^\s*(?P<num>\d+[A-Za-z]?)\s*[\.\:\-–—]\s"),  # "303. Theft"
+    # Matches: "Section 123", "Sec 123", "Sec. 123" anywhere in text
+    re.compile(r"(?i)\b(?:section|sec\.?)\s+(?P<num>\d+[A-Za-z]?)"),
+    
+    # Matches: "123. The Title" (Must look like a heading: Number + Dot + Space + Capital Letter)
+    re.compile(r"(?m)^\s*(?P<num>\d+[A-Za-z]?)\.\s+[A-Z]"),
 ]
 
-def _first_section_number(text: str) -> str | None:
+def _extract_all_section_numbers(text: str) -> List[str]:
+    """Finds ALL section numbers mentioned in a chunk, distinct."""
+    found = set()
     for rx in _SEC_RXES:
-        m = rx.search(text or "")
-        if m:
-            return (m.group("num") or "").strip()
-    return None
-
+        # We use finditer to catch multiple sections in one chunk
+        for m in rx.finditer(text or ""):
+            num = m.group("num")
+            if num:
+                # Clean up (sometimes OCR gives '123..' or '123 ')
+                clean_num = num.strip(" .")
+                if len(clean_num) < 6: # Ignore huge numbers/noise
+                    found.add(clean_num)
+    return list(found)
 
 def _build_section_map(records: List[Dict]) -> Dict[str, Dict]:
     """
     Map section number -> {idx, source, snippet}
-    idx is the chunk index within META order.
+    If a chunk mentions multiple sections, we index it for ALL of them.
     """
     secmap: Dict[str, Dict] = {}
+    print(f"[sections] Building map from {len(records)} chunks...")
+    
+    count = 0
     for idx, r in enumerate(records):
-        num = _first_section_number(r["text"])
-        if not num:
-            continue
-        secmap.setdefault(num, {
-            "idx": idx,
-            "source": r["source"],
-            "snippet": " ".join(r["text"].split())[:160]
-        })
+        # Find all sections in this chunk
+        nums = _extract_all_section_numbers(r["text"])
+        
+        for num in nums:
+            # If we already found this section in a previous chunk, 
+            # usually the FIRST time we see it is the "definition", 
+            # so we keep the existing one. 
+            # BUT: If the previous one was just a mention and this one 
+            # looks like a header (shorter text?), we might swap.
+            # For now, First-Found-Wins is usually best for legal docs.
+            if num not in secmap:
+                secmap[num] = {
+                    "idx": idx,
+                    "source": r["source"],
+                    "filename": r.get("filename", "unknown"), # Store filename
+                    "snippet": " ".join(r["text"].split())[:160]
+                }
+                count += 1
+                
+    print(f"[sections] Identified {count} unique sections.")
     return secmap
 
 
@@ -145,6 +175,7 @@ def main() -> None:
                     "text": c,
                     "source": sec["source"],
                     "url": sec["url"],
+                    "filename": path.name,
                 })
             chunk_count += len(chunks)
         print(f"      sections: {sec_count}, chunks: {chunk_count}")

@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # --- OpenRouter (LLM) ---
@@ -9,25 +9,23 @@ class Settings(BaseSettings):
     OR_SITE_NAME: str | None = None
 
     # --- Retrieval knobs ---
-    USE_EMBEDDINGS: bool = False   # <— add this
-    USE_FAISS: bool = True         # FAISS will only be used if embeddings exist
+    USE_EMBEDDINGS: bool = True   
+    USE_FAISS: bool = True        
     USE_BM25: bool = True
-    TOP_K: int = 5
-    INITIAL_K: int = 25
-    MIN_SIM_SCORE: float = 0.28
-    BM25_WEIGHT: float = 0.40
-    VEC_WEIGHT: float = 0.60
-    EXPAND_NEIGHBORS: int = 1
+    
+    # Embedding Model (Must match what you used in ingest.py)
+    EMBED_MODEL: str = "openai/text-embedding-3-small"
 
-    # (Optional) embeddings config if you later enable them
-    # GOOGLE_API_KEY: str | None = None
-    # EMBED_MODEL: str = "text-embedding-004"
+    # Reranking knobs
+    ENABLE_RERANKING: bool = True # Toggle to save memory if needed
+    TOP_K: int = 5            # How many go to LLM
+    RRF_K: int = 60           # RRF constant
+    RERANK_CANDIDATES: int = 20 # How many to send to Cross-Encoder
 
     # --- App ---
     JURISDICTION: str = "IN"
-    SCOPE_TOPICS: str = "contracts"
 
-    class Config:
-        env_file = ".env"
+    # This line fixes the error by ignoring old variables in your .env
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

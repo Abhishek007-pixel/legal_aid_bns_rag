@@ -1,0 +1,17 @@
+# Ignore the virtual environment (Heavy!)
+.venv
+venv
+env
+
+# Ignore Git history
+.git
+
+# Ignore cache files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# (Optional) Ignore data if you are using volumes
+# Since docker-compose mounts ./data, we don't need to copy it during build
+data
