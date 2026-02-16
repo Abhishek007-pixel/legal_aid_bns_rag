@@ -192,9 +192,100 @@ class HybridRetriever:
                 
             final_results = sorted(top_candidates, key=lambda x: x["rerank_score"], reverse=True)
             return final_results[:top_k] # Return reranked top_k
-        else:
             # Fallback: Just return RRF top_k if Reranker disabled
             return top_candidates[:top_k]
+
+    def add_document(self, text: str, filename: str) -> int:
+        """
+        Dynamically add a document to the index (Memory + Disk).
+        Returns number of chunks added.
+        """
+        print(f"[index] Adding document: {filename}")
+        
+        # 1. Chunking
+        # Simple chunking strategy for now: split by paragraphs then by tokens
+        words = text.split()
+        chunks = []
+        chunk_size = 300
+        overlap = 50
+        
+        if len(words) <= chunk_size:
+            chunks.append(text)
+        else:
+            for i in range(0, len(words), chunk_size - overlap):
+                chunk = " ".join(words[i:i + chunk_size])
+                chunks.append(chunk)
+
+        if not chunks:
+            return 0
+            
+        # 2. Prepare Metadata & Embeddings
+        new_meta = []
+        new_embeddings = []
+        
+        print(f"[index] Processing {len(chunks)} chunks...")
+        
+        for i, chunk in enumerate(chunks):
+            # Create metadata record
+            rec = {
+                "text": chunk,
+                "filename": filename,
+                "source": filename,
+                "title": filename, 
+                "chunk_id": i
+            }
+            new_meta.append(rec)
+            
+            # Embed (One by one for simplicity in this method, batching would be better)
+            emb = self._get_query_embedding(chunk)
+            if emb is not None:
+                new_embeddings.append(emb)
+            else:
+                # Handle failed embedding: Just skip adding to embeddings list.
+                # The document will be indexed in BM25 but not vector search.
+                print(f"[warning] Embedding failed for chunk {i}, skipping vector index.")
+
+        if not new_meta:
+             print("[error] No chunks processed")
+             return 0
+            
+        # 3. Update In-Memory Indices
+        
+        # FAISS (Only if embeddings exist)
+        if new_embeddings:
+            try:
+                vectors = np.vstack(new_embeddings)
+                if self.faiss_index is None:
+                    self.faiss_index = faiss.IndexFlatIP(vectors.shape[1])
+                self.faiss_index.add(vectors)
+            except Exception as e:
+                print(f"[error] Failed to update FAISS index: {e}")
+        
+        # Meta (Always update)
+        self.meta.extend(new_meta)
+        
+        # BM25 (Rebuild)
+        try:
+            tokenized_corpus = [doc["text"].split() for doc in self.meta]
+            self.bm25 = BM25Okapi(tokenized_corpus)
+        except Exception as e:
+             print(f"[error] Failed to update BM25 index: {e}")
+        
+        # 4. Persistence
+        # Append meta to file
+        try:
+            with open(self.meta_path, "a", encoding="utf-8") as f:
+                for rec in new_meta:
+                    f.write(json.dumps(rec) + "\n")
+            
+            # Save FAISS index
+            faiss.write_index(self.faiss_index, str(self.faiss_path))
+            print("[index] Persisted updates to disk")
+        except Exception as e:
+            print(f"[warning] Failed to persist index: {e}")
+        
+        print(f"[index] Successfully added {len(new_meta)} chunks from {filename}")
+        return len(new_meta)
 
 # Global instance
 hybrid_retriever = HybridRetriever()

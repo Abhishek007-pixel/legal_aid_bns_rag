@@ -1,9 +1,9 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    # --- Hugging Face (for LLM) ---
-    HF_TOKEN: str
-    HF_MODEL: str = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+    # --- Gemini API (for LLM) ---
+    GEMINI_API_KEY: str
+    GEMINI_MODEL: str = "gemini-flash-lite-latest"  # Lite model for more requests
     
     # --- OpenRouter (for embeddings only) ---
     OPENROUTER_API_KEY: str

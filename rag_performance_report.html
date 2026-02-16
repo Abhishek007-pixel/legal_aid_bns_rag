@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RAG Performance Report - 20260216_103802</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; border-bottom: 3px solid #1a73e8; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; border-left: 4px solid #1a73e8; padding-left: 15px; }
+        .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0; }
+        .metric-card { background: #f8f9fa; padding: 20px; border-radius: 6px; border-left: 4px solid #1a73e8; }
+        .metric-value { font-size: 32px; font-weight: bold; color: #1a73e8; }
+        .metric-label { color: #666; margin-top: 5px; }
+        .score { font-size: 48px; font-weight: bold; }
+        .score.good { color: #0f9d58; }
+        .score.warning { color: #f4b400; }
+        .score.bad { color: #db4437; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #1a73e8; color: white; }
+        tr:hover { background: #f5f5f5; }
+        .recommendation { background: #fff3cd; border-left: 4px solid #f4b400; padding: 15px; margin: 10px 0; border-radius: 4px; }
+        .recommendation.good { background: #d4edda; border-color: #0f9d58; }
+        .query-example { background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 6px; border: 1px solid #ddd; }
+        .answer { background: white; padding: 15px; margin-top: 10px; border-left: 3px solid #1a73e8; }
+        .timestamp { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RAG Performance Evaluation Report</h1>
+        <p class="timestamp">Generated: 2026-02-16 10:38:27</p>
+        <p class="timestamp">Session ID: 20260216_103802</p>
+        
+        <h2>Overall Performance Score</h2>
+        <div class="metric-card" style="text-align: center;">
+            <div class="score bad">
+                18.4/100
+            </div>
+            <div class="metric-label">Overall RAG Performance</div>
+        </div>
+        
+        <h2>Summary Metrics</h2>
+        <div class="metric-grid">
+
+            <div class="metric-card">
+                <div class="metric-value">0.00</div>
+                <div class="metric-label">Avg Precision@5</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">0.00</div>
+                <div class="metric-label">Avg MRR</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-value">5</div>
+                <div class="metric-label">Total Queries</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value">100%</div>
+                <div class="metric-label">Success Rate</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-value">68%</div>
+                <div class="metric-label">Keyword Coverage</div>
+            </div>
+
+        </div>
+        
+        <h2>Latency Breakdown</h2>
+        <table>
+            <tr><th>Component</th><th>Avg (ms)</th><th>Min (ms)</th><th>Max (ms)</th></tr>
+
+            <tr>
+                <td>Hybrid Retrieval</td>
+                <td>1917.2</td>
+                <td>1391.9</td>
+                <td>3592.1</td>
+            </tr>
+
+            <tr>
+                <td>Llm Generation</td>
+                <td>3093.2</td>
+                <td>2594.6</td>
+                <td>3573.6</td>
+            </tr>
+
+            <tr>
+                <td>Total Query</td>
+                <td>5010.8</td>
+                <td>4113.4</td>
+                <td>6780.2</td>
+            </tr>
+
+        </table>
+        
+        <h2>Recommendations</h2>
+<div class="recommendation">LOW PRECISION: Consider improving embeddings or adjusting BM25 weights</div>
+<div class="recommendation">LOW KEYWORD COVERAGE: LLM may not be using retrieved context effectively</div>
+<div class="recommendation">HIGH LATENCY: Consider caching, async processing, or model optimization</div>
+
+        <h2>Example Queries</h2>
+
+        <div class="query-example">
+            <strong>Query 1:</strong> What is theft under BNS?
+            <div class="answer">
+                <strong>Answer:</strong><br>
+                1) **Section & Heading (first line):**
+Section 303: Theft
+
+2) **Definition (1–2 sentences):**
+Whoever, intending to take dishonestly any movable property out of the possession of any person without that person’s consent, moves that property in order to such taking, is said to commit theft.
+
+3) **Key elements (bullets):**
+*   Intending to take dishonestly any movable property.
+*   Out of the possession of any person.
+*   Without that person’s consent.
+*   Moves that property in order to such taki...
+                <br><br>
+                <strong>Citations:</strong> 12 sources
+            </div>
+        </div>
+
+        <div class="query-example">
+            <strong>Query 2:</strong> What are the punishments for murder?
+            <div class="answer">
+                <strong>Answer:</strong><br>
+                Section not visible in provided context.
+
+The provided context discusses joint liability for murder [1], punishments for unfair labour practices [4], definitions related to the Labour Act [2], and property transfer laws [6], but it does not contain a specific section detailing the general punishments for murder.
+
+Evidence:
+[1] "B intentionally cooperate in the commission of murder and as each of them does an act by which the death is caused, they are both guilty of the offence though their acts ...
+                <br><br>
+                <strong>Citations:</strong> 12 sources
+            </div>
+        </div>
+
+        <div class="query-example">
+            <strong>Query 3:</strong> Explain criminal conspiracy
+            <div class="answer">
+                <strong>Answer:</strong><br>
+                1) **Section & Heading (first line):**
+Section 61: Criminal conspiracy.
+
+2) **Definition (1–2 sentences):**
+When two or more persons agree with the common object to do, or cause to be done—(a) an illegal act; or (b) an act which is not illegal by illegal means, such an agreement is designated a criminal conspiracy.
+
+3) **Key elements (bullets):**
+*   No agreement except an agreement to commit an offence shall amount to a criminal conspiracy unless some act besides the agreement is done by one or...
+                <br><br>
+                <strong>Citations:</strong> 12 sources
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

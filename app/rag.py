@@ -2,14 +2,15 @@ from __future__ import annotations
 from typing import Dict, List
 from pathlib import Path
 import traceback
-from huggingface_hub import InferenceClient
+import google.generativeai as genai
 
 from app.hybrid_retriever import hybrid_retriever 
 from app.prompts import SYSTEM_PROMPT, USER_PROMPT
 from app.settings import settings
 
-# Hugging Face Inference Client
-_hf_client = InferenceClient(token=settings.HF_TOKEN)
+# Configure Gemini API
+genai.configure(api_key=settings.GEMINI_API_KEY)
+_gemini_model = genai.GenerativeModel(settings.GEMINI_MODEL)
 
 def _build_context(docs: List[Dict]) -> tuple[str, List[Dict]]:
     lines, cites = [], []
@@ -35,19 +36,23 @@ def answer(question: str, filter_filename: str = None) -> Dict:
 
     context, cites = _build_context(docs)
     user_prompt = USER_PROMPT.format(jurisdiction=settings.JURISDICTION, question=question, context=context)
-    
-    # Combine system and user prompts for Hugging Face
-    full_prompt = f"{SYSTEM_PROMPT}\n\nUser: {user_prompt}\n\nAssistant:"
 
     try:
-        # Call Hugging Face Inference API
-        response = _hf_client.text_generation(
-            prompt=full_prompt,
-            model=settings.HF_MODEL,
-            max_new_tokens=1000,
-            temperature=0.7,
+        # Call Gemini API
+        # Create a new model instance with system instruction
+        model_with_system = genai.GenerativeModel(
+            settings.GEMINI_MODEL,
+            system_instruction=SYSTEM_PROMPT
         )
-        return {"answer": response, "citations": cites}
+        
+        response = model_with_system.generate_content(
+            user_prompt,
+            generation_config=genai.GenerationConfig(
+                max_output_tokens=1000,
+                temperature=0.7,
+            )
+        )
+        return {"answer": response.text, "citations": cites}
 
     except Exception as e:
         print("[rag.answer] Error:", e)

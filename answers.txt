@@ -1,0 +1,81 @@
+=== LEGl AID RAG PIPELINE RESULTS ===
+Generated: 2026-02-16 10:52:56
+
+QUERY 1: What is theft under BNS?
+--------------------------------------------------------------------------------
+ANSWER:
+1) **Section & Heading (first line):**
+Section 303: Theft
+
+2) **Definition (1–2 sentences):**
+Whoever, intending to take dishonestly any movable property out of the possession of any person without that person’s consent, moves that property in order to such taking, is said to commit theft.
+
+3) **Key elements (bullets):**
+*   Intending to take dishonestly any movable property.
+*   Out of the possession of any person.
+*   Without that person’s consent.
+*   Moves that property in order to such taking.
+
+4) **Evidence (quoted with [#]):**
+[2] "(1) Whoever, intending to take dishonestly any movable property out of the possession of any person without that person’s consent, moves that property in or der to such taking, is said to commit theft."
+[5] "A takes property belonging to Z out of Z’s possession, in good faith believing at the time when he takes it, that the property belongs to himself. A is not guilty of theft"
+
+5) **Sources:**
+[2] → BNS\_Part1.pdf
+[5] → BNS\_Part1.pdf
+
+CITATIONS:
+- [[1]] BNS_Part1 (BNS_Part1.pdf)
+- [[2]] BNS_Part1 (BNS_Part1.pdf)
+- [[3]] BNS_Part1 (BNS_Part1.pdf)
+- [[4]] BNS_Part1 (BNS_Part1.pdf)
+- [[5]] BNS_Part1 (BNS_Part1.pdf)
+- [[6]] BNS_Part1 (BNS_Part1.pdf)
+- [[7]] BNS_Part1 (BNS_Part1.pdf)
+- [[8]] BNS_Part1 (BNS_Part1.pdf)
+- [[9]] BNS_Part1 (BNS_Part1.pdf)
+- [[10]] BNS_Part1 (BNS_Part1.pdf)
+- [[11]] BNS_Part1 (BNS_Part1.pdf)
+- [[12]] IT_act_2000_updated (IT_act_2000_updated.pdf)
+
+================================================================================
+
+QUERY 2: What are the punishments for murder?
+--------------------------------------------------------------------------------
+ANSWER:
+Section not visible in provided context.
+
+The provided context discusses joint liability in the commission of murder [1], punishments for unfair labour practices [4], and definitions related to property transfer [6] and labour laws [2, 4, 5, 7, 8, 9, 10, 11, 12]. There is no visible section detailing the specific punishments for murder itself.
+
+Evidence:
+[1] "B intentionally cooperate in the commission of murder and as each of them does an act by which the death is caused, they are both guilty of the offence though their acts are separate."
+[4] "Punishment for committing unfair labour practice According to Section 25U of the Industrial Disputes Act, 1947, any person who commits any unfair labour practice will be punishable with imprisonment for a term which may extend to six months or with fine which may extend to one thousand rupees or with both."
+
+Sources:
+[1] → BNS_Part1.pdf
+[4] → Labour Act.pdf
+
+CITATIONS:
+- [[1]] BNS_Part1 (BNS_Part1.pdf)
+- [[2]] Labour Act (Labour Act.pdf)
+- [[3]] BNS_Part1 (BNS_Part1.pdf)
+- [[4]] Labour Act (Labour Act.pdf)
+- [[5]] Labour Act (Labour Act.pdf)
+- [[6]] THE TRANSFER OF PROPERTY ACT, 1882  (THE TRANSFER OF PROPERTY ACT, 1882 .pdf)
+- [[7]] Labour Act (Labour Act.pdf)
+- [[8]] Labour Act (Labour Act.pdf)
+- [[9]] Labour Act (Labour Act.pdf)
+- [[10]] Labour Act (Labour Act.pdf)
+- [[11]] Labour Act (Labour Act.pdf)
+- [[12]] Labour Act (Labour Act.pdf)
+
+================================================================================
+
+QUERY 3: Explain criminal conspiracy
+--------------------------------------------------------------------------------
+ANSWER:
+Error generating response.
+
+
+================================================================================
+

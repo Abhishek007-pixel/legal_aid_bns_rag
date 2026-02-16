@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalAid AI Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                LegalAid AI
+            </div>
+
+            <div class="upload-section">
+                <h3>Upload Document</h3>
+                <div class="drop-zone" id="dropZone">
+                    <p>Drag & drop PDF here or click to browse</p>
+                    <input type="file" id="fileInput" accept=".pdf" hidden>
+                </div>
+                <div id="uploadStatus" class="status-msg"></div>
+            </div>
+
+            <div class="info-box">
+                <p>Upload a PDF to ask specific questions about it, or ask general legal questions.</p>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-interface">
+            <header>
+                <h1>Legal Assistant</h1>
+                <span class="badge">BNS & Logic Integrated</span>
+            </header>
+
+            <div class="chat-history" id="chatHistory">
+                <!-- Messages will appear here -->
+                <div class="message bot-message">
+                    Hello! I'm your AI legal assistant. You can ask me about the Bharatiya Nyaya Sanhita (BNS) or upload
+                    a legal document to analyze.
+                </div>
+            </div>
+
+            <div class="input-area">
+                <form id="chatForm">
+                    <input type="text" id="questionInput" placeholder="Ask a legal question..." required
+                        autocomplete="off">
+                    <button type="submit" id="sendBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>

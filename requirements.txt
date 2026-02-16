@@ -5,6 +5,7 @@ requests
 pydantic
 pydantic-settings
 openai
+google-generativeai
 # Retrieval & RAG libraries
 rank_bm25
 sentence-transformers

@@ -1,0 +1,32 @@
+[
+  {
+    "query": "What is theft under BNS?",
+    "expected_sections": ["303"],
+    "expected_keywords": ["dishonestly", "movable property", "possession", "consent"],
+    "category": "definitions"
+  },
+  {
+    "query": "What are the punishments for murder?",
+    "expected_sections": ["101", "103"],
+    "expected_keywords": ["death", "life imprisonment", "murder"],
+    "category": "punishments"
+  },
+  {
+    "query": "Explain criminal conspiracy",
+    "expected_sections": ["61"],
+    "expected_keywords": ["two or more persons", "agree", "illegal act", "punishable"],
+    "category": "definitions"
+  },
+  {
+    "query": "What is the difference between theft and extortion?",
+    "expected_sections": ["303", "308"],
+    "expected_keywords": ["theft", "extortion", "fear", "dishonestly"],
+    "category": "comparisons"
+  },
+  {
+    "query": "When can private defense cause death?",
+    "expected_sections": ["100", "103"],
+    "expected_keywords": ["private defense", "death", "assault", "reasonable apprehension"],
+    "category": "defenses"
+  }
+]

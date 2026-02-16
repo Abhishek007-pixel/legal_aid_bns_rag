@@ -1,0 +1,258 @@
+{
+  "session_id": "20260216_103802",
+  "timestamp": "2026-02-16T10:38:27.484301",
+  "summary": {
+    "retrieval": {
+      "avg_precision@5": 0.0,
+      "avg_recall@5": 0.0,
+      "avg_mrr": 0.0,
+      "avg_num_retrieved": 12
+    },
+    "answers": {
+      "total_queries": 5,
+      "avg_answer_length": 1169.6,
+      "avg_citations": 12,
+      "completion_rate": 1.0,
+      "citation_rate": 1.0,
+      "avg_keyword_coverage": 0.6833333333333333
+    },
+    "latency": {
+      "hybrid_retrieval": {
+        "avg_ms": 1917.1647548675537,
+        "min_ms": 1391.9076919555664,
+        "max_ms": 3592.0517444610596,
+        "std_dev": 943.1469992666938
+      },
+      "llm_generation": {
+        "avg_ms": 3093.229055404663,
+        "min_ms": 2594.589948654175,
+        "max_ms": 3573.6396312713623,
+        "std_dev": 395.49667627519017
+      },
+      "total_query": {
+        "avg_ms": 5010.790014266968,
+        "min_ms": 4113.441228866577,
+        "max_ms": 6780.246257781982,
+        "std_dev": 1038.2229048188844
+      }
+    },
+    "overall_score": 18.416666666666668
+  },
+  "detailed_metrics": {
+    "session_id": "20260216_103802",
+    "queries": [],
+    "retrieval_metrics": [
+      {
+        "query": "What is theft under BNS?",
+        "num_retrieved": 12,
+        "timestamp": "2026-02-16T10:38:06.022287",
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "mrr": 0.0,
+        "avg_score": 8.941491776498744,
+        "max_score": 10.682184120582297,
+        "min_score": 7.741338004569376,
+        "score_variance": 1.630281977960785
+      },
+      {
+        "query": "What are the punishments for murder?",
+        "num_retrieved": 12,
+        "timestamp": "2026-02-16T10:38:10.886498",
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "mrr": 0.0,
+        "avg_score": 9.148455512471207,
+        "max_score": 12.940353137297832,
+        "min_score": 6.964621240727249,
+        "score_variance": 8.324205899265356
+      },
+      {
+        "query": "Explain criminal conspiracy",
+        "num_retrieved": 12,
+        "timestamp": "2026-02-16T10:38:15.074697",
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "mrr": 0.0,
+        "avg_score": 7.70405391303593,
+        "max_score": 11.057309532685482,
+        "min_score": 4.154147105357896,
+        "score_variance": 6.219941319841281
+      },
+      {
+        "query": "What is the difference between theft and extortion?",
+        "num_retrieved": 12,
+        "timestamp": "2026-02-16T10:38:20.167318",
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "mrr": 0.0,
+        "avg_score": 13.22364200604969,
+        "max_score": 14.410790825547995,
+        "min_score": 12.372130622183615,
+        "score_variance": 0.7419744772706546
+      },
+      {
+        "query": "When can private defense cause death?",
+        "num_retrieved": 12,
+        "timestamp": "2026-02-16T10:38:24.169667",
+        "precision@5": 0.0,
+        "recall@5": 0.0,
+        "mrr": 0.0,
+        "avg_score": 10.342637802593165,
+        "max_score": 11.486968300315937,
+        "min_score": 9.358175448153773,
+        "score_variance": 0.7996294480616843
+      }
+    ],
+    "answer_metrics": [
+      {
+        "query": "What is theft under BNS?",
+        "answer_length": 1156,
+        "num_citations": 12,
+        "timestamp": "2026-02-16T10:38:09.210340",
+        "has_answer": true,
+        "has_citations": true,
+        "keyword_coverage": 1.0,
+        "found_keywords": [
+          "dishonestly",
+          "movable property",
+          "possession",
+          "consent"
+        ],
+        "missing_keywords": [],
+        "section_coverage": 0.0,
+        "cited_sections": [],
+        "missing_sections": [
+          "303"
+        ],
+        "is_structured": true,
+        "cites_sources": true
+      },
+      {
+        "query": "What are the punishments for murder?",
+        "answer_length": 879,
+        "num_citations": 12,
+        "timestamp": "2026-02-16T10:38:13.682655",
+        "has_answer": true,
+        "has_citations": true,
+        "keyword_coverage": 0.6666666666666666,
+        "found_keywords": [
+          "death",
+          "murder"
+        ],
+        "missing_keywords": [
+          "life imprisonment"
+        ],
+        "section_coverage": 0.0,
+        "cited_sections": [],
+        "missing_sections": [
+          "101",
+          "103"
+        ],
+        "is_structured": true,
+        "cites_sources": true
+      },
+      {
+        "query": "Explain criminal conspiracy",
+        "answer_length": 1339,
+        "num_citations": 12,
+        "timestamp": "2026-02-16T10:38:18.648624",
+        "has_answer": true,
+        "has_citations": true,
+        "keyword_coverage": 0.75,
+        "found_keywords": [
+          "two or more persons",
+          "agree",
+          "illegal act"
+        ],
+        "missing_keywords": [
+          "punishable"
+        ],
+        "section_coverage": 0.0,
+        "cited_sections": [],
+        "missing_sections": [
+          "61"
+        ],
+        "is_structured": true,
+        "cites_sources": true
+      },
+      {
+        "query": "What is the difference between theft and extortion?",
+        "answer_length": 1039,
+        "num_citations": 12,
+        "timestamp": "2026-02-16T10:38:22.762124",
+        "has_answer": true,
+        "has_citations": true,
+        "keyword_coverage": 0.5,
+        "found_keywords": [
+          "theft",
+          "dishonestly"
+        ],
+        "missing_keywords": [
+          "extortion",
+          "fear"
+        ],
+        "section_coverage": 0.0,
+        "cited_sections": [],
+        "missing_sections": [
+          "303",
+          "308"
+        ],
+        "is_structured": true,
+        "cites_sources": true
+      },
+      {
+        "query": "When can private defense cause death?",
+        "answer_length": 1435,
+        "num_citations": 12,
+        "timestamp": "2026-02-16T10:38:27.484201",
+        "has_answer": true,
+        "has_citations": true,
+        "keyword_coverage": 0.5,
+        "found_keywords": [
+          "death",
+          "assault"
+        ],
+        "missing_keywords": [
+          "private defense",
+          "reasonable apprehension"
+        ],
+        "section_coverage": 0.0,
+        "cited_sections": [],
+        "missing_sections": [
+          "100",
+          "103"
+        ],
+        "is_structured": true,
+        "cites_sources": true
+      }
+    ],
+    "latency_metrics": {
+      "hybrid_retrieval": [
+        3592.0517444610596,
+        1675.9421825408936,
+        1391.9076919555664,
+        1518.5189247131348,
+        1407.4032306671143
+      ],
+      "llm_generation": [
+        3187.7400875091553,
+        2795.8645820617676,
+        3573.6396312713623,
+        2594.589948654175,
+        3314.3110275268555
+      ],
+      "total_query": [
+        6780.246257781982,
+        4472.25022315979,
+        4965.986013412476,
+        4113.441228866577,
+        4722.026348114014
+      ]
+    }
+  },
+  "recommendations": [
+    "LOW PRECISION: Consider improving embeddings or adjusting BM25 weights",
+    "LOW KEYWORD COVERAGE: LLM may not be using retrieved context effectively",
+    "HIGH LATENCY: Consider caching, async processing, or model optimization"
+  ]
+}
