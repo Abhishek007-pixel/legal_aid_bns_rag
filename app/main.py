@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ from app.prompts import GENERAL_SYSTEM_PROMPT
 from app.hybrid_retriever import hybrid_retriever
 from app.settings import settings
 
-app = FastAPI(title="LegalAid RAG", version="1.0")
+app = FastAPI(title="LegalAid RAG", version="2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +26,7 @@ app.add_middleware(
 class AskIn(BaseModel):
     question: str
     filter_filename: Optional[str] = None
+    user_id: Optional[str] = None   # NEW: identifies the user for scoped retrieval
 
 
 class ChatIn(BaseModel):
@@ -39,8 +40,11 @@ def health():
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    """Upload and index a PDF file."""
+async def upload_file(
+    file: UploadFile = File(...),
+    user_id: Optional[str] = Form(default=None),   # NEW: optional user_id form field
+):
+    """Upload and index a PDF file tagged with scope=user_upload."""
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
@@ -68,11 +72,18 @@ async def upload_file(file: UploadFile = File(...)):
                 detail="PDF contains no extractable text (scanned/image-based PDF is not supported).",
             )
 
-        num_chunks = hybrid_retriever.add_document(text, file.filename)
+        # Tag with scope=user_upload and user_id for isolation
+        num_chunks = hybrid_retriever.add_document(
+            text, file.filename,
+            scope="user_upload",
+            user_id=user_id,
+        )
 
         return {
             "filename": file.filename,
             "chunks_added": num_chunks,
+            "scope": "user_upload",
+            "user_id": user_id,
             "status": "success",
             "message": f"Successfully indexed {num_chunks} chunks from {file.filename}",
         }
@@ -85,9 +96,16 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.post("/ask")
 def ask(payload: AskIn):
-    """RAG-powered Q&A — requires uploaded documents."""
+    """RAG-powered Q&A with scoped retrieval.
+    - If user_id is set: hybrid_search (user uploads + law corpus merged by score)
+    - Otherwise: searches law corpus only
+    """
     try:
-        out = answer(payload.question, filter_filename=payload.filter_filename)
+        out = answer(
+            payload.question,
+            filter_filename=payload.filter_filename,
+            user_id=payload.user_id,
+        )
         disclaimer = (
             "This is general legal information, not legal advice. "
             "Consult a qualified professional for your specific situation."
@@ -97,12 +115,15 @@ def ask(payload: AskIn):
     except Exception as e:
         print(f"[error] Generation failed: {e}")
         try:
-            docs = hybrid_retriever.search(
-                payload.question, top_k=5, filename=payload.filter_filename
+            # Fallback retrieval: scoped to law corpus
+            docs = hybrid_retriever.hybrid_search(
+                payload.question,
+                user_id=payload.user_id,
+                top_k=5,
             )
             fallback = (
                 "⚠️ **AI generation temporarily unavailable.**\n\n"
-                "Below are the most relevant sections from your documents:"
+                "Below are the most relevant sections from the legal corpus:"
             )
             return {"answer": fallback, "citations": docs, "fallback": True}
         except Exception as e2:

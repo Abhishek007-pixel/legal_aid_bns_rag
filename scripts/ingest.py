@@ -1,4 +1,4 @@
-# scripts/ingest.py
+﻿# scripts/ingest.py
 from __future__ import annotations  # must be first
 
 # --- make app imports work when running as a module/script
@@ -24,6 +24,9 @@ CHUNKS = PROC / "chunks.jsonl"
 META = INDEX / "meta.jsonl"
 FAISS_FILE = INDEX / "faiss.index"
 SECTION_MAP = INDEX / "section_map.json"
+
+# --- Allowed scope folders (fail-fast — never silently default) ---
+ALLOWED_SCOPES = {"global_law", "supreme_court", "labour_law", "state_law"}
 
 
 def _ensure_dirs() -> None:
@@ -70,26 +73,41 @@ def _embed_texts_openrouter(client: OpenAI, texts: List[str]):
     X = np.array(embs, dtype="float32")
     # Normalize with safety check to avoid division by zero
     norms = np.linalg.norm(X, axis=1, keepdims=True)
-    # Replace zero norms with 1.0 to avoid NaN (shouldn't happen with embeddings, but safety first)
     norms = np.where(norms == 0, 1.0, norms)
     X = X / norms
     return X
 
 
-# ---- section heading detection (used to build section_map) ----
-# --- ---
+# ---- Scope detection ----
+def _detect_scope(path: Path) -> str:
+    """
+    Derive scope from the file's parent folder name.
+    Raises ValueError immediately if the folder is not in ALLOWED_SCOPES.
+    Legal systems must not silently default to a wrong scope.
+    """
+    folder = path.parent.name
+    if folder not in ALLOWED_SCOPES:
+        raise ValueError(
+            f"[ingest] ERROR: File '{path.name}' is in folder '{folder}' which is NOT a valid scope.\n"
+            f"  Allowed scope folders: {ALLOWED_SCOPES}\n"
+            f"  Move the file to one of those folders and retry."
+        )
+    return folder
 
-# ---- UPDATED: Robust section heading detection ----
+
+def _derive_act_name(path: Path) -> str:
+    """Derive a clean act name from the file stem."""
+    stem = path.stem
+    # Replace underscores/hyphens with spaces, remove year patterns like '2023'
+    name = stem.replace("_", " ").replace("-", " ")
+    return name.strip()
+
+
+# ---- section heading detection ----
 import re
 
-# We use a list of patterns ordered by reliability.
-# 1. Explicit "Section 123" (High confidence, search anywhere)
-# 2. "123. Title" (Medium confidence, requires start of line or sentence)
 _SEC_RXES = [
-    # Matches: "Section 123", "Sec 123", "Sec. 123" anywhere in text
     re.compile(r"(?i)\b(?:section|sec\.?)\s+(?P<num>\d+[A-Za-z]?)"),
-    
-    # Matches: "123. The Title" (Must look like a heading: Number + Dot + Space + Capital Letter)
     re.compile(r"(?m)^\s*(?P<num>\d+[A-Za-z]?)\.\s+[A-Z]"),
 ]
 
@@ -97,13 +115,11 @@ def _extract_all_section_numbers(text: str) -> List[str]:
     """Finds ALL section numbers mentioned in a chunk, distinct."""
     found = set()
     for rx in _SEC_RXES:
-        # We use finditer to catch multiple sections in one chunk
         for m in rx.finditer(text or ""):
             num = m.group("num")
             if num:
-                # Clean up (sometimes OCR gives '123..' or '123 ')
                 clean_num = num.strip(" .")
-                if len(clean_num) < 6: # Ignore huge numbers/noise
+                if len(clean_num) < 6:
                     found.add(clean_num)
     return list(found)
 
@@ -117,21 +133,15 @@ def _build_section_map(records: List[Dict]) -> Dict[str, Dict]:
     
     count = 0
     for idx, r in enumerate(records):
-        # Find all sections in this chunk
         nums = _extract_all_section_numbers(r["text"])
         
         for num in nums:
-            # If we already found this section in a previous chunk, 
-            # usually the FIRST time we see it is the "definition", 
-            # so we keep the existing one. 
-            # BUT: If the previous one was just a mention and this one 
-            # looks like a header (shorter text?), we might swap.
-            # For now, First-Found-Wins is usually best for legal docs.
             if num not in secmap:
                 secmap[num] = {
                     "idx": idx,
                     "source": r["source"],
-                    "filename": r.get("filename", "unknown"), # Store filename
+                    "filename": r.get("filename", "unknown"),
+                    "scope": r.get("scope", "global_law"),
                     "snippet": " ".join(r["text"].split())[:160]
                 }
                 count += 1
@@ -150,7 +160,7 @@ def main() -> None:
     print(f"[ingest] scanning {RAW.resolve()} ...")
     files = sorted([p for p in RAW.rglob("*") if p.is_file()])
     if not files:
-        print("[ingest] No files found in data/raw/. Add PDFs/HTML and retry.")
+        print("[ingest] No files found in data/raw/. Add PDFs in scoped subfolders and retry.")
         sys.exit(1)
     print(f"[ingest] found {len(files)} file(s).")
 
@@ -166,7 +176,16 @@ def main() -> None:
             print(f"  - skip (unsupported): {path.name}")
             continue
 
-        print(f"[parse] {path.name}")
+        # --- Strict scope detection (fail fast) ---
+        try:
+            scope = _detect_scope(path)
+        except ValueError as e:
+            print(str(e))
+            sys.exit(7)
+
+        act_name = _derive_act_name(path)
+        print(f"[parse] {path.name}  ->  scope={scope}  act={act_name}")
+
         sec_count = 0
         chunk_count = 0
         for sec in loader(path):
@@ -180,6 +199,10 @@ def main() -> None:
                     "source": sec["source"],
                     "url": sec["url"],
                     "filename": path.name,
+                    # --- NEW: scope & jurisdiction metadata ---
+                    "scope": scope,
+                    "act_name": act_name,
+                    "jurisdiction": "india",
                 })
             chunk_count += len(chunks)
         print(f"      sections: {sec_count}, chunks: {chunk_count}")
@@ -188,16 +211,21 @@ def main() -> None:
         print("[ingest] Parsed 0 chunks.")
         sys.exit(2)
 
-    print(f"[write] writing {len(records)} chunk records → {CHUNKS}")
+    # Print scope distribution
+    from collections import Counter
+    scope_counts = Counter(r["scope"] for r in records)
+    print(f"\n[ingest] Scope distribution: {dict(scope_counts)}")
+
+    print(f"[write] writing {len(records)} chunk records -> {CHUNKS}")
     with open(CHUNKS, "w", encoding="utf-8") as f:
         for r in records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-    # ---- build and write section_map (works for both BM25-only and vector modes) ----
+    # ---- build and write section_map ----
     secmap = _build_section_map(records)
     with open(SECTION_MAP, "w", encoding="utf-8") as f:
         json.dump(secmap, f, ensure_ascii=False, indent=2)
-    print(f"[sections] indexed {len(secmap)} section headings → {SECTION_MAP}")
+    print(f"[sections] indexed {len(secmap)} section headings -> {SECTION_MAP}")
 
     if args.dry_run:
         print("[dry-run] skipping embeddings/index build. Done.")
@@ -205,12 +233,12 @@ def main() -> None:
 
     # ----- BM25-only path -----
     if not getattr(settings, "USE_EMBEDDINGS", False):
-        print("[bm25-only] USE_EMBEDDINGS=false → skipping FAISS vector index.")
-        print(f"[meta] writing metadata → {META}")
+        print("[bm25-only] USE_EMBEDDINGS=false -> skipping FAISS vector index.")
+        print(f"[meta] writing metadata -> {META}")
         with open(META, "w", encoding="utf-8") as f:
             for r in records:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        print(f"[done] Wrote metadata for {len(records)} chunks → {META}")
+        print(f"[done] Wrote metadata for {len(records)} chunks -> {META}")
         return
 
     # ----- Vector path (requires embeddings + FAISS) -----
@@ -242,12 +270,12 @@ def main() -> None:
     index.add(X)
     faiss.write_index(index, str(FAISS_FILE))
 
-    print(f"[meta] writing metadata → {META}")
+    print(f"[meta] writing metadata -> {META}")
     with open(META, "w", encoding="utf-8") as f:
         for r in records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-    print(f"[done] Indexed {len(records)} chunks → {FAISS_FILE}")
+    print(f"[done] Indexed {len(records)} chunks -> {FAISS_FILE}")
 
 
 if __name__ == "__main__":

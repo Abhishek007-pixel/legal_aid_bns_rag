@@ -1,11 +1,11 @@
 from __future__ import annotations
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pathlib import Path
 import re
 import traceback
 import requests
 
-from app.hybrid_retriever import hybrid_retriever
+from app.hybrid_retriever import hybrid_retriever, LAW_SCOPES
 from app.prompts import SYSTEM_PROMPT, USER_PROMPT
 from app.settings import settings
 
@@ -39,19 +39,46 @@ def _build_context(docs: List[Dict]) -> tuple[str, List[Dict]]:
     lines, cites = [], []
     for i, d in enumerate(docs, start=1):
         tag = f"[{i}]"
-        src = d.get("source", "unknown")
-        fname = d.get("filename", Path(src).name)
-        lines.append(f"{tag} (Source: {fname})\n{d['text'][:1200]}")
-        cites.append({"ref": tag, "title": d.get("title", "Section"), "where": fname})
+        scope = d.get("scope", "unknown")
+        act = d.get("act_name", "") or d.get("filename", "")
+        fname = d.get("filename", Path(d.get("source", "unknown")).name)
+        # Improved citation formatting: include scope and act name
+        source_label = f"{act} — {scope}" if act else fname
+        lines.append(f"{tag} (Source: {source_label})\n{d['text'][:1200]}")
+        cites.append({"ref": tag, "title": d.get("title", "Section"), "where": source_label})
     return "\n\n---\n\n".join(lines), cites
 
 
-def answer(question: str, filter_filename: str = None) -> Dict:
-    docs = hybrid_retriever.search(question, filename=filter_filename, top_k=settings.TOP_K)
+def answer(
+    question: str,
+    filter_filename: str = None,
+    user_id: Optional[str] = None,
+) -> Dict:
+    """
+    Retrieve context and generate an answer.
+    Routing logic:
+      - If user_id is set  → hybrid_search (user uploads + law corpus, merged by score)
+      - If filter_filename  → legacy: search only that file
+      - Otherwise          → law corpus search only
+    """
+    if filter_filename:
+        # Legacy filename-filter path (backward compatible)
+        docs = hybrid_retriever.search(question, filename=filter_filename, top_k=settings.TOP_K)
+    elif user_id:
+        # Scoped hybrid: user uploads first, law corpus as fallback, merged by score
+        docs = hybrid_retriever.hybrid_search(question, user_id=user_id, top_k=settings.TOP_K)
+    else:
+        # No user context — search law corpus only
+        docs = hybrid_retriever.search(
+            question, scope_filter=LAW_SCOPES, top_k=settings.TOP_K
+        )
 
     if not docs:
         return {
-            "answer": "I couldn't find relevant content in the uploaded documents. Please upload a relevant legal document first.",
+            "answer": (
+                "I couldn't find relevant content in the legal documents. "
+                "Please try rephrasing your question or upload a relevant legal document."
+            ),
             "citations": [],
         }
 

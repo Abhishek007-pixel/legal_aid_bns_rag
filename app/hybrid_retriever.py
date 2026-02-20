@@ -1,5 +1,6 @@
 import json
 import re
+import datetime
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Optional
@@ -7,6 +8,16 @@ from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder
 
 from app.settings import settings
+
+
+# Keywords that suggest the user is asking about their own uploaded document
+USER_DOC_SIGNALS = [
+    "my contract", "my document", "this pdf", "uploaded", "my case",
+    "my agreement", "this document", "my file", "my lease", "my deed",
+    "this file", "my complaint", "my fir", "my petition",
+]
+
+LAW_SCOPES = ["global_law", "supreme_court", "labour_law", "state_law"]
 
 
 class HybridRetriever:
@@ -23,6 +34,10 @@ class HybridRetriever:
             with open(self.meta_path, "r", encoding="utf-8") as f:
                 self.meta = [json.loads(line) for line in f]
             print(f"[init] Loaded {len(self.meta)} chunks from metadata.")
+            # Show scope distribution on startup
+            from collections import Counter
+            scope_dist = Counter(d.get("scope", "unknown") for d in self.meta)
+            print(f"[init] Scope distribution: {dict(scope_dist)}")
         else:
             print("[warning] No metadata found. Please run ingest.")
 
@@ -73,7 +88,31 @@ class HybridRetriever:
         print("[init] Hybrid Retriever ready.")
 
     # ------------------------------------------------------------------ #
-    #  Embedding (local sentence-transformers — no API key needed)
+    #  Intent Detection
+    # ------------------------------------------------------------------ #
+    def _query_is_about_user_doc(self, query: str) -> bool:
+        """Return True if the query seems to be about the user's uploaded document."""
+        q = query.lower()
+        return any(sig in q for sig in USER_DOC_SIGNALS)
+
+    # ------------------------------------------------------------------ #
+    #  Retrieval Logging
+    # ------------------------------------------------------------------ #
+    def _log_retrieval(self, query: str, results: List[Dict]) -> None:
+        log_entry = {
+            "ts": datetime.datetime.utcnow().isoformat(),
+            "query": query[:120],
+            "scopes_returned": list({d.get("scope", "?") for d in results}),
+            "num_docs": len(results),
+            "top_score": (
+                results[0].get("rerank_score", results[0].get("score", 0))
+                if results else 0
+            ),
+        }
+        print(f"[retrieval_log] {json.dumps(log_entry)}")
+
+    # ------------------------------------------------------------------ #
+    #  Embedding
     # ------------------------------------------------------------------ #
     def _get_query_embedding(self, text: str) -> Optional[np.ndarray]:
         """Embed query using local sentence-transformers model."""
@@ -87,14 +126,19 @@ class HybridRetriever:
             return None
 
     # ------------------------------------------------------------------ #
-    #  FAISS Retrieval
+    #  FAISS Retrieval (with scope filter)
     # ------------------------------------------------------------------ #
-    def _retrieve_faiss(self, query_vec, k=30, filename=None) -> List[Dict]:
-        """Fetch vectors, then filter by filename."""
+    def _retrieve_faiss(
+        self, query_vec, k=30,
+        filename: str = None,
+        scope_filter: List[str] = None,
+        user_id: str = None
+    ) -> List[Dict]:
+        """Fetch vectors, then filter by scope/filename/user_id."""
         if not self.faiss_index or query_vec is None:
             return []
 
-        search_k = k * 4 if filename else k
+        search_k = k * 4 if (filename or scope_filter) else k
         if search_k > len(self.meta):
             search_k = len(self.meta)
 
@@ -104,7 +148,14 @@ class HybridRetriever:
             if idx == -1 or idx >= len(self.meta):
                 continue
             rec = self.meta[idx]
+            # Filename filter (legacy support)
             if filename and rec.get("filename") != filename:
+                continue
+            # Scope filter
+            if scope_filter and rec.get("scope") not in scope_filter:
+                continue
+            # User isolation for user_upload scope
+            if rec.get("scope") == "user_upload" and user_id and rec.get("user_id") != user_id:
                 continue
             results.append({**rec, "score": float(score), "retrieval_type": "faiss"})
             if len(results) >= k:
@@ -112,10 +163,15 @@ class HybridRetriever:
         return results
 
     # ------------------------------------------------------------------ #
-    #  BM25 Retrieval
+    #  BM25 Retrieval (with scope filter)
     # ------------------------------------------------------------------ #
-    def _retrieve_bm25(self, query, k=30, filename=None) -> List[Dict]:
-        """Fetch keyword matches, then filter."""
+    def _retrieve_bm25(
+        self, query, k=30,
+        filename: str = None,
+        scope_filter: List[str] = None,
+        user_id: str = None
+    ) -> List[Dict]:
+        """Fetch keyword matches, then filter by scope/user_id."""
         if not self.bm25:
             return []
 
@@ -129,19 +185,27 @@ class HybridRetriever:
             rec = self.meta[idx]
             if filename and rec.get("filename") != filename:
                 continue
+            if scope_filter and rec.get("scope") not in scope_filter:
+                continue
+            if rec.get("scope") == "user_upload" and user_id and rec.get("user_id") != user_id:
+                continue
             results.append({**rec, "score": float(scores[idx]), "retrieval_type": "bm25"})
         return results
 
     # ------------------------------------------------------------------ #
     #  Section-map Retrieval
     # ------------------------------------------------------------------ #
-    def _retrieve_section(self, query) -> List[Dict]:
+    def _retrieve_section(self, query, scope_filter: List[str] = None) -> List[Dict]:
         """Deterministic regex lookup for Section numbers."""
         match = re.search(r"sec(?:tion)?\.?\s+(\d+[A-Za-z]?)", query, re.I)
         if match:
             sec_num = match.group(1)
             if sec_num in self.section_map:
-                idx = self.section_map[sec_num]["idx"]
+                entry = self.section_map[sec_num]
+                idx = entry["idx"]
+                # Apply scope filter
+                if scope_filter and entry.get("scope") not in scope_filter:
+                    return []
                 if idx < len(self.meta):
                     rec = self.meta[idx]
                     return [{**rec, "score": 999.0, "retrieval_type": "section_map"}]
@@ -164,17 +228,27 @@ class HybridRetriever:
         return [doc_map[doc_id] for doc_id in sorted_ids]
 
     # ------------------------------------------------------------------ #
-    #  Main Search Entry Point
+    #  Core Search (scoped)
     # ------------------------------------------------------------------ #
-    def search(self, query: str, filename: str = None, top_k: int = 5):
-        # BUG #3 FIX: Only embed when both USE_FAISS and USE_EMBEDDINGS are true
+    def search(
+        self, query: str,
+        filename: str = None,
+        scope_filter: List[str] = None,
+        user_id: str = None,
+        top_k: int = 5
+    ) -> List[Dict]:
+        """
+        Core search with optional scope filtering and user isolation.
+        scope_filter: list of allowed scopes e.g. ["global_law", "supreme_court"]
+        user_id: isolates user_upload scope per user
+        """
         q_vec = None
         if settings.USE_FAISS and settings.USE_EMBEDDINGS:
             q_vec = self._get_query_embedding(query)
 
-        faiss_hits = self._retrieve_faiss(q_vec, k=30, filename=filename)
-        bm25_hits = self._retrieve_bm25(query, k=30, filename=filename)
-        sec_hits = self._retrieve_section(query)
+        faiss_hits = self._retrieve_faiss(q_vec, k=30, filename=filename, scope_filter=scope_filter, user_id=user_id)
+        bm25_hits = self._retrieve_bm25(query, k=30, filename=filename, scope_filter=scope_filter, user_id=user_id)
+        sec_hits = self._retrieve_section(query, scope_filter=scope_filter)
 
         candidates = self.reciprocal_rank_fusion(
             {"faiss": faiss_hits, "bm25": bm25_hits, "section": sec_hits},
@@ -186,7 +260,6 @@ class HybridRetriever:
         if not top_candidates:
             return []
 
-        # BUG #4 FIX: proper if/else so we never return None
         if self.reranker:
             pairs = [[query, doc["text"]] for doc in top_candidates]
             scores = self.reranker.predict(pairs)
@@ -195,14 +268,77 @@ class HybridRetriever:
             final_results = sorted(top_candidates, key=lambda x: x["rerank_score"], reverse=True)
             return final_results[:top_k]
 
-        # Fallback: reranker disabled — return RRF top_k (never returns None)
         return top_candidates[:top_k]
+
+    # ------------------------------------------------------------------ #
+    #  Hybrid Search — Weighted Score Merge (PRIMARY ENTRY POINT)
+    # ------------------------------------------------------------------ #
+    def hybrid_search(self, query: str, user_id: str = None, top_k: int = 5) -> List[Dict]:
+        """
+        Scoped hybrid search:
+        1. Fetch from user's uploads (if user_id provided)
+        2. Fetch from law corpus
+        3. Merge by score (weighted, not fixed split)
+        4. Apply confidence threshold
+        5. Boost user docs if query signals user-document intent
+        6. Log retrieval for debugging
+        """
+        # Detect intent
+        user_intent = self._query_is_about_user_doc(query) if user_id else False
+
+        # Retrieve from both pools
+        user_docs = []
+        if user_id:
+            user_docs = self.search(
+                query, scope_filter=["user_upload"], user_id=user_id, top_k=10
+            )
+        law_docs = self.search(
+            query, scope_filter=LAW_SCOPES, top_k=10
+        )
+
+        # Boost user doc scores if intent suggests user is asking about their document
+        if user_intent and user_docs:
+            for d in user_docs:
+                score_key = "rerank_score" if "rerank_score" in d else "score"
+                d[score_key] = d[score_key] * 1.5
+            print(f"[hybrid_search] Intent detected: boosting user_upload scores by 1.5x")
+
+        # Merge and deduplicate
+        combined = user_docs + law_docs
+        seen, unique = set(), []
+        for doc in combined:
+            key = doc.get("id") or hash(doc["text"][:80])
+            if key not in seen:
+                seen.add(key)
+                unique.append(doc)
+
+        # Apply confidence threshold
+        threshold = settings.MIN_SIM_SCORE
+        confident = [
+            d for d in unique
+            if d.get("rerank_score", d.get("score", 0)) >= threshold
+        ]
+
+        # Sort by best available score
+        ranked = sorted(
+            confident,
+            key=lambda x: x.get("rerank_score", x.get("score", 0)),
+            reverse=True,
+        )
+
+        result = ranked[:top_k]
+        self._log_retrieval(query, result)
+        return result
 
     # ------------------------------------------------------------------ #
     #  Dynamic Document Adding (for /upload endpoint)
     # ------------------------------------------------------------------ #
-    def add_document(self, text: str, filename: str) -> int:
-        print(f"[index] Adding document: {filename}")
+    def add_document(
+        self, text: str, filename: str,
+        scope: str = "user_upload",
+        user_id: str = None
+    ) -> int:
+        print(f"[index] Adding document: {filename}  scope={scope}  user_id={user_id}")
 
         words = text.split()
         chunks = []
@@ -228,10 +364,14 @@ class HybridRetriever:
                 "source": filename,
                 "title": filename,
                 "chunk_id": i,
+                # --- Scope & jurisdiction metadata ---
+                "scope": scope,
+                "act_name": filename,
+                "jurisdiction": "india",
+                "user_id": user_id,
             }
             new_meta.append(rec)
 
-            # Embed only if vector mode is on
             if settings.USE_FAISS and settings.USE_EMBEDDINGS:
                 emb = self._get_query_embedding(chunk)
                 if emb is not None:
@@ -254,10 +394,8 @@ class HybridRetriever:
             except Exception as e:
                 print(f"[error] Failed to update FAISS index: {e}")
 
-        # Update metadata
+        # Update metadata and BM25
         self.meta.extend(new_meta)
-
-        # Rebuild BM25
         try:
             tokenized_corpus = [doc["text"].split() for doc in self.meta]
             self.bm25 = BM25Okapi(tokenized_corpus)
@@ -278,7 +416,7 @@ class HybridRetriever:
         except Exception as e:
             print(f"[warning] Failed to persist index: {e}")
 
-        print(f"[index] Successfully added {len(new_meta)} chunks from {filename}")
+        print(f"[index] Successfully added {len(new_meta)} chunks from {filename} (scope={scope})")
         return len(new_meta)
 
 

@@ -19,6 +19,41 @@ The system quality is directly tied to the documents indexed. Add authoritative 
 
 ---
 
+## Level 1.5 — Fix User Upload Session Persistence ⚠️ (Security / Privacy)
+
+**Problem:** When a user uploads a PDF, two things get permanently saved to disk:
+
+| What | Where | Issue |
+|---|---|---|
+| The PDF file | `data/uploads/filename.pdf` | Never deleted — grows forever |
+| Indexed chunks | `data/index/meta.jsonl` (appended) | Loaded back into BM25 on every server restart — permanently pollutes the law index |
+
+**Risks:**
+- If `user_id` is not provided (current UI default), User A's private document becomes searchable by User B after a restart
+- Index grows unboundedly with every upload
+- Re-running `scripts/ingest.py` silently wipes all user-uploaded chunks from the index
+
+**Two fix options:**
+
+### Option A — In-Memory Only (Recommended for now)
+Do NOT write user chunks to `meta.jsonl`. Keep them in RAM only (`self.meta` list).  
+They are lost on server restart — which matches the user expectation of a "session upload."
+
+```python
+# In hybrid_retriever.add_document() — remove the file persistence block for user_upload scope:
+if scope != "user_upload":
+    with open(self.meta_path, "a", ...) as f:
+        ...  # only persist law corpus additions
+```
+
+### Option B — Separate User Index with TTL (Better long-term)
+Write user uploads to a separate `data/index/user_meta.jsonl`.  
+Add a `DELETE /upload/{user_id}` API endpoint or a background job that purges entries older than N hours.
+
+**Action:** Implement Option A as a quick fix. Option B when adding user accounts / auth.
+
+---
+
 ## Level 2 — Tune Retrieval Config (`.env` changes only)
 
 ```env
