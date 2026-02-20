@@ -1,34 +1,46 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 
 class Settings(BaseSettings):
-    # --- Gemini API (for LLM) ---
-    GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-flash-lite-latest"  # Lite model for more requests
-    
-    # --- OpenRouter (for embeddings only) ---
-    OPENROUTER_API_KEY: str
-    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
-    OR_SITE_URL: str | None = None
-    OR_SITE_NAME: str | None = None
+    # --- Sarvam AI (LLM) ---
+    SARVAM_API_KEY: str
+    SARVAM_API_URL: str = "https://api.sarvam.ai/v1/chat/completions"
+    SARVAM_MODEL: str = "sarvam-m"
+
+    # --- Retrieval mode flags ---
+    USE_FAISS: bool = False        # True = vector+BM25 hybrid; False = BM25 only
+    USE_BM25: bool = True
+    USE_EMBEDDINGS: bool = False   # Must match USE_FAISS
+
+    # --- Embedding (local sentence-transformers, no API key needed) ---
+    EMBED_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+    # --- Reranking ---
+    ENABLE_RERANKING: bool = True
 
     # --- Retrieval knobs ---
-    USE_EMBEDDINGS: bool = True   
-    USE_FAISS: bool = True        
-    USE_BM25: bool = True
-    
-    # Embedding Model (Must match what you used in ingest.py)
-    EMBED_MODEL: str = "openai/text-embedding-3-small"
-
-    # Reranking knobs
-    ENABLE_RERANKING: bool = True # Toggle to save memory if needed
-    TOP_K: int = 5            # How many go to LLM
-    RRF_K: int = 60           # RRF constant
-    RERANK_CANDIDATES: int = 20 # How many to send to Cross-Encoder
+    TOP_K: int = 5
+    RRF_K: int = 60
+    RERANK_CANDIDATES: int = 20
+    INITIAL_K: int = 30
+    EXPAND_NEIGHBORS: int = 2
+    MIN_SIM_SCORE: float = 0.15
+    BM25_WEIGHT: float = 1.0
+    VEC_WEIGHT: float = 0.0
 
     # --- App ---
     JURISDICTION: str = "IN"
+    SCOPE_TOPICS: str = "criminal law, procedure"
 
-    # This line fixes the error by ignoring old variables in your .env
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @model_validator(mode="after")
+    def validate_config(self):
+        if self.USE_EMBEDDINGS and not self.USE_FAISS:
+            raise ValueError(
+                "Invalid config: USE_EMBEDDINGS=True requires USE_FAISS=True. "
+                "Either set USE_FAISS=true or set USE_EMBEDDINGS=false."
+            )
+        return self
 
 settings = Settings()

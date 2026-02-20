@@ -2,68 +2,140 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LegalAid AI Assistant</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LegalAid — AI Legal Document Assistant</title>
+    <meta name="description"
+        content="Upload legal documents and get accurate, cited AI answers powered by Sarvam AI." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <!-- Background ambient orbs -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-inner">
             <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-                LegalAid AI
-            </div>
-
-            <div class="upload-section">
-                <h3>Upload Document</h3>
-                <div class="drop-zone" id="dropZone">
-                    <p>Drag & drop PDF here or click to browse</p>
-                    <input type="file" id="fileInput" accept=".pdf" hidden>
+                <div class="logo-icon">⚖️</div>
+                <div>
+                    <span class="logo-text">LegalAid</span>
+                    <span class="logo-badge">AI</span>
                 </div>
-                <div id="uploadStatus" class="status-msg"></div>
+            </div>
+            <div class="header-status" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="main-layout">
+
+        <!-- LEFT PANEL — Document Upload & Library -->
+        <aside class="sidebar">
+            <div class="panel-heading">
+                <span class="panel-icon">📁</span>
+                <h2>Document Library</h2>
             </div>
 
-            <div class="info-box">
-                <p>Upload a PDF to ask specific questions about it, or ask general legal questions.</p>
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept=".pdf" hidden />
+                <div class="upload-icon">📄</div>
+                <p class="upload-title">Drop your legal PDF here</p>
+                <p class="upload-sub">or click to browse</p>
+                <button class="btn-upload" id="browseBtn">Choose File</button>
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="upload-progress hidden" id="uploadProgress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-label" id="progressLabel">Uploading...</p>
+            </div>
+
+            <!-- Document List -->
+            <div class="doc-list" id="docList">
+                <p class="doc-empty-msg" id="docEmptyMsg">No documents uploaded yet.</p>
+            </div>
+
+            <!-- Context -->
+            <div class="context-box">
+                <p class="context-label">Active Context</p>
+                <p class="context-value" id="activeContext">All Documents</p>
+                <button class="btn-clear-ctx hidden" id="clearCtxBtn" onclick="clearContext()">✕ Clear filter</button>
             </div>
         </aside>
 
-        <!-- Main Chat Area -->
-        <main class="chat-interface">
-            <header>
-                <h1>Legal Assistant</h1>
-                <span class="badge">BNS & Logic Integrated</span>
-            </header>
-
-            <div class="chat-history" id="chatHistory">
-                <!-- Messages will appear here -->
-                <div class="message bot-message">
-                    Hello! I'm your AI legal assistant. You can ask me about the Bharatiya Nyaya Sanhita (BNS) or upload
-                    a legal document to analyze.
+        <!-- RIGHT PANEL — Chat Interface -->
+        <section class="chat-panel">
+            <div class="chat-header">
+                <div>
+                    <h1 class="chat-title">Legal AI Assistant</h1>
+                    <p class="chat-subtitle">Ask questions about your uploaded legal documents</p>
                 </div>
             </div>
 
-            <div class="input-area">
-                <form id="chatForm">
-                    <input type="text" id="questionInput" placeholder="Ask a legal question..." required
-                        autocomplete="off">
-                    <button type="submit" id="sendBtn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
-                </form>
+            <!-- Messages Container -->
+            <div class="messages-container" id="messagesContainer">
+
+                <!-- Welcome Card -->
+                <div class="welcome-card" id="welcomeCard">
+                    <div class="welcome-icon">⚖️</div>
+                    <h2 class="welcome-title">Welcome to LegalAid AI</h2>
+                    <p class="welcome-sub">Upload a legal PDF and ask questions — I'll give structured, cited answers
+                        from your documents.</p>
+
+                    <!-- FAQ Chips -->
+                    <div class="faq-section">
+                        <p class="faq-label">Quick questions to get started:</p>
+                        <div class="faq-chips" id="faqChips">
+                            <button class="faq-chip" data-q="What is LegalAid and how does it work?">🤖 What is
+                                LegalAid?</button>
+                            <button class="faq-chip" data-q="How do I use LegalAid to analyse a document?">📋 How do I
+                                use it?</button>
+                            <button class="faq-chip" data-q="What types of documents can I upload?">📄 What documents
+                                work?</button>
+                            <button class="faq-chip" data-q="What Indian laws and acts does LegalAid cover?">🇮🇳 What
+                                laws are covered?</button>
+                            <button class="faq-chip" data-q="Can I upload multiple documents and compare them?">📂
+                                Multiple documents?</button>
+                            <button class="faq-chip" data-q="How accurate are the answers and citations?">🎯 How
+                                accurate is it?</button>
+                            <button class="faq-chip" data-q="What is the punishment for theft under BNS?">🔍 Example:
+                                Theft under BNS</button>
+                            <button class="faq-chip" data-q="How many hours can an employee work per day in India?">⏱️
+                                Example: Labour hours</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </main>
-    </div>
+
+            <!-- Input Bar -->
+            <div class="input-bar">
+                <div class="input-wrapper">
+                    <textarea id="questionInput" class="question-input"
+                        placeholder="Ask a legal question about your documents…" rows="1"></textarea>
+                    <button class="btn-ask" id="askBtn" onclick="askQuestion()">
+                        <span id="askBtnIcon">➤</span>
+                    </button>
+                </div>
+                <p class="input-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</p>
+            </div>
+        </section>
+    </main>
+
     <script src="script.js"></script>
 </body>
 

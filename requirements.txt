@@ -1,17 +1,13 @@
 fastapi
 uvicorn
-streamlit
-requests
+python-multipart
 pydantic
 pydantic-settings
-openai
-google-generativeai
-# Retrieval & RAG libraries
+requests
+# Retrieval & RAG
 rank_bm25
 sentence-transformers
 faiss-cpu
 numpy
 # PDF processing
 pypdf
-beautifulsoup4
-trafilatura
