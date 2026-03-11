@@ -24,26 +24,33 @@ Users ask a question → the system retrieves the most relevant legal passages �
 
 ---
 
-## 🚀 What I'm Currently Working On
+## 🌟 Features
 
-### ✅ Completed
 | Feature | Description |
 |---|---|
-| **Hybrid RAG Pipeline** | FAISS (semantic) + BM25 (keyword) search fused via Reciprocal Rank Fusion (RRF) |
-| **Cross-Encoder Reranking** | `ms-marco-TinyBERT-L-2-v2` reranker for precision scoring of retrieved chunks |
-| **Scoped Retrieval System** | Documents tagged with scope (`global_law`, `supreme_court`, `labour_law`, `state_law`, `user_upload`) — retrieval is scoped per query type |
-| **User Document Upload** | Upload PDFs via the UI; chunks are indexed in-memory for session-scoped retrieval |
-| **Sarvam AI Integration** | LLM generation via Sarvam's chat completions API with `<think>` tag stripping |
-| **Structured Response Format** | AI outputs include: Legal Summary, Applicable Law, Key Points, Evidence, and Answer |
-| **Fallback Retrieval** | When LLM is unavailable, returns top retrieved chunks directly |
-| **RAG Evaluation Framework** | `evaluate_rag.py` with metrics: answer relevance, faithfulness, citation accuracy, context precision |
-| **Docker Support** | Full containerisation via `Dockerfile` + `docker-compose.yml` |
-| **Chat Formatting** | Client-side markdown rendering for headings, lists, bold, and inline citations |
-| **Jurisdiction Metadata** | Chunks enriched with `act_name`, `scope`, and `jurisdiction` fields |
+| **Hybrid RAG Pipeline** | FAISS (semantic) + BM25 (keyword) search fused via Reciprocal Rank Fusion (RRF). |
+| **Scoped Retrieval System** | Documents tagged with scopes (`global_law`, `supreme_court`, `labour_law`, `state_law`, `user_upload`) to ensure high-precision filtering based on query intent. |
+| **Cross-Encoder Reranking** | `ms-marco-TinyBERT-L-2-v2` reranker for precision scoring of retrieved chunks. |
+| **Session-Safe User Uploads** | Upload PDFs via the UI; chunks are indexed in-memory for session-only retrieval. Isolated by `user_id` and wiped via a dedicated DELETE endpoint. |
+| **Sarvam AI Integration** | LLM generation via Sarvam's chat completions API with advanced intent detection and `<think>` tag stripping. |
+| **Structured Legal Responses** | AI outputs include: Legal Summary, Applicable Law, Key Points, Evidence, and Answer, with accurate markdown and inline citations. |
+| **Feedback System** | 👍/👎 feedback collection per answer, saved to `data/feedback.jsonl` for continuous fine-tuning and evaluation. |
+| **Fallback Retrieval** | Returns top retrieved legal chunks directly when LLM generation fails or is unavailable. |
+| **Automated Evaluation** | End-to-end evaluation pipeline (`evaluate_rag.py`) measuring answer relevance, faithfulness, citation accuracy, and context precision. |
+| **Diagnostic Utilities** | `diagnose_and_run.py` automatically detects missing dependencies, index issues, and port conflicts before launching the app. |
+| **Docker Support** | Full containerisation via `Dockerfile` + `docker-compose.yml`. |
 
-### 🔄 In Progress
-- Session persistence improvements for user-uploaded documents
-- Expanding the indexed law corpus (BNSS, BSA, Consumer Protection Act)
+---
+
+## 🧠 How It Works
+
+1. **Document Ingestion (`ingest.py`)**: Law PDFs are parsed, split into clause-aware chunks, and embedded into a FAISS vector database. Metadata (like act name, section number, and jurisdiction) is saved to a BM25 index.
+2. **Query Processing**: The FastAPI backend receives the user's question and optional uploaded documents.
+3. **Intent Detection**: The system extracts the legal context (e.g., scoping the query to `labour_law` or checking for general greetings).
+4. **Hybrid Search & Fusion**: The `hybrid_retriever` performs parallel semantic (FAISS) and keyword (BM25) searches. Results are merged using Reciprocal Rank Fusion (RRF).
+5. **Reranking**: A cross-encoder model reranks the fused results to prioritize the most legally accurate chunks.
+6. **LLM Generation**: The top chunks are injected into a strict system prompt. Sarvam AI generates the detailed legal answer based *only* on the provided context.
+7. **Client Rendering**: The Vanilla JS frontend renders the markdown, handles citations natively, and allows the user to leave thumbs-up/down feedback.
 
 ---
 
@@ -83,7 +90,7 @@ User Query
              ▼
 ┌─────────────────────────────────┐
 │     Static UI (HTML/JS/CSS)     │
-│  Chat interface + PDF upload    │
+│  Chat interface + feedback      │
 │  Markdown rendering + citations │
 └─────────────────────────────────┘
 ```
@@ -95,17 +102,15 @@ User Query
 ```
 legal_aid/
 ├── app/
-│   ├── main.py              # FastAPI app — /ask, /upload, /chat, /health
+│   ├── main.py              # FastAPI app — /ask, /upload, /chat, /feedback
 │   ├── rag.py               # RAG orchestration — retrieval + LLM generation
 │   ├── hybrid_retriever.py  # FAISS + BM25 + RRF + Cross-Encoder + Scope logic
 │   ├── chunking.py          # PDF text splitter
 │   ├── prompts.py           # System & user prompts for Sarvam AI
-│   ├── metrics.py           # RAG evaluation metrics
 │   └── settings.py          # Env-based config (Pydantic settings)
 ├── scripts/
 │   ├── ingest.py            # Indexes law PDFs with scope/jurisdiction metadata
-│   ├── eval.py              # Retrieval accuracy evaluation
-│   └── debug_search.py      # Manual search testing
+│   └── eval.py              # Retrieval accuracy evaluation
 ├── ui/
 │   ├── index.html           # Main chat UI
 │   ├── script.js            # Frontend logic (upload, ask, markdown render)
@@ -115,6 +120,7 @@ legal_aid/
 │   ├── index/               # FAISS index + BM25 meta.jsonl
 │   └── uploads/             # User-uploaded PDFs (session only)
 ├── evaluate_rag.py          # End-to-end RAG benchmark runner
+├── diagnose_and_run.py      # Pre-flight diagnostic and auto-repair script
 ├── test_complete_pipeline.py# Pipeline integration tests
 ├── IMPROVEMENTS.md          # Detailed improvement & training roadmap
 ├── Dockerfile
@@ -175,12 +181,12 @@ USE_EMBEDDINGS=true
 python scripts/ingest.py
 ```
 
-### 6️⃣ Run the app
+### 6️⃣ Run the app with Diagnostics
 ```bash
-python run_app.py
-# or
-uvicorn app.main:app --reload
+python diagnose_and_run.py
 ```
+*(Alternatively: `python run_app.py` or `uvicorn app.main:app --reload`)*
+
 Open `http://localhost:8000` in your browser.
 
 ### 🐳 Docker (Alternative)
@@ -202,7 +208,7 @@ docker-compose up --build
 
 ## 📊 RAG Evaluation
 
-Run the built-in evaluation framework:
+Run the built-in end-to-end evaluation framework:
 ```bash
 python evaluate_rag.py
 ```
@@ -215,41 +221,17 @@ Metrics tracked:
 | **Citation Accuracy** | Are citations correctly attributed? |
 | **Context Precision** | Are retrieved chunks relevant? |
 
-Results are saved to `rag_metrics_report.json` and `rag_performance_report.html`.
+Results are saved into actionable JSON reports and detailed HTML dashboards.
 
 ---
 
 ## 🔮 Future Implementations
 
-### 🔜 Short-Term (Next Sprint)
-
-| Feature | Description |
-|---|---|
-| **Session-safe user uploads** | Keep user PDFs in-memory only (not persisted to disk) to prevent cross-user data leakage |
-| **Expand law corpus** | Add BNSS, BSA, Consumer Protection Act, IT Act 2000 to the indexed corpus |
-| **👍/👎 Feedback system** | Collect user ratings per answer → `data/feedback.jsonl` for training data |
-| **DELETE /upload/{user_id}** | API endpoint to clear a user's uploaded documents on session end |
-
-### 🔮 Medium-Term
-
-| Feature | Description |
-|---|---|
-| **Conversation memory** | Multi-turn chat with context carry-forward (append previous turns to the LLM prompt) |
-| **Fine-tune Cross-Encoder** | Train `ms-marco-TinyBERT-L-2-v2` on legal Q&A pairs for higher reranking precision |
-| **Fine-tune Embedding Model** | Domain-adapt `all-MiniLM-L6-v2` on Indian legal text for better semantic mapping |
-| **User authentication** | JWT-based auth so uploads are namespaced securely per user account |
-| **Multilingual support** | Hindi and regional language query support via Sarvam AI's multilingual capabilities |
-
-### 🚀 Long-Term
-
-| Feature | Description |
-|---|---|
-| **Voice query integration** | Speech-to-text input for accessibility |
-| **Document comparison** | Side-by-side comparison of two legal documents or sections |
-| **Case outcome prediction** | ML model trained on Supreme Court judgement outcomes |
-| **Lawyer referral system** | Connect users to verified advocates for paid consultations |
-| **Mobile app** | React Native / Flutter app wrapping the FastAPI backend |
-| **Hugging Face / Streamlit Cloud deployment** | One-click public deployment |
+For a deep dive into the algorithmic progression and fine-tuning pipeline, see [IMPROVEMENTS.md](./IMPROVEMENTS.md). Some upcoming major goals:
+- **Conversation Memory**: Context carry-forward per-session.
+- **Cross-Encoder Fine-Tuning**: Customizing the reranker on legal Q&A pairs for precision bounds.
+- **Multilingual Support**: Hindi query support via Sarvam AI.
+- **Agentic Multi-Step Reasoning**: Connecting multiple endpoints to synthesize case summaries.
 
 ---
 
